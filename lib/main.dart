@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:layanan_sosial/menu/productpage.dart';
+import 'package:layanan_sosial/menu/cashier.dart';
+import 'package:layanan_sosial/menu/ai.dart';
 
 void main() {
   runApp(const SmartCashierApp());
@@ -23,7 +26,7 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF2D8CFF), // biru background
+      backgroundColor: const Color(0xFF2D8CFF),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -31,8 +34,6 @@ class HomePage extends StatelessWidget {
             child: Column(
               children: [
                 const SizedBox(height: 20),
-
-                // Title
                 const Text(
                   "Smart Cashier\nRestorant Seafood",
                   textAlign: TextAlign.center,
@@ -42,43 +43,45 @@ class HomePage extends StatelessWidget {
                     color: Colors.white,
                   ),
                 ),
-
                 const SizedBox(height: 40),
 
-                // =========================
-                // Card 1 – Manajemen Produk & Stock
-                // =========================
+                // Manajemen Produk
                 menuCard(
-                  imageUrl:
-                      "https://i.ibb.co/7CqVJ6X/seafood.png",
+                  imageUrl: "https://i.ibb.co/7CqVJ6X/seafood.png",
                   title: "Manajemen Product & Stock",
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const Productpage()),
+                    );
+                  },
                 ),
-
                 const SizedBox(height: 40),
 
-                // =========================
-                // Card 2 – Kasir / Transaksi
-                // =========================
+                // Cashier Transactions
                 menuCard(
-                  imageUrl:
-                      "https://i.ibb.co/THgJtTC/cashier.png",
+                  imageUrl: "https://i.ibb.co/THgJtTC/cashier.png",
                   title: "Cashier Transactions",
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const Cashier()),
+                    );
+                  },
                 ),
-
                 const SizedBox(height: 40),
 
-                // =========================
-                // Card 3 – AI Feature
-                // =========================
+                // AI Feature
                 menuCard(
-                  imageUrl:
-                      "https://i.ibb.co/6B4rtVx/ai.png",
+                  imageUrl: "https://i.ibb.co/6B4rtVx/ai.png",
                   title: "Feature AI",
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const FutureAi()),
+                    );
+                  },
                 ),
-
                 const SizedBox(height: 40),
               ],
             ),
@@ -88,9 +91,6 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  // =========================
-  // Widget Card Menu
-  // =========================
   Widget menuCard({
     required String imageUrl,
     required String title,
@@ -99,7 +99,6 @@ class HomePage extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: double.infinity,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -107,7 +106,6 @@ class HomePage extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // Image
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: Image.network(
@@ -118,8 +116,6 @@ class HomePage extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 20),
-
-            // Text
             Expanded(
               child: Text(
                 title,
@@ -132,6 +128,51 @@ class HomePage extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+//
+// ─── HALAMAN MANAGEMEN PRODUK ─────────────────────────────────────────
+//
+class ProductPage extends StatelessWidget {
+  const ProductPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Manajemen Product & Stock")),
+      body: const Center(child: Text("Halaman Manajemen Produk")),
+    );
+  }
+}
+
+//
+// ─── HALAMAN CASHIER ─────────────────────────────────────────
+//
+class CashierPage extends StatelessWidget {
+  const CashierPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Cashier Transactions")),
+      body: const Center(child: Text("Halaman Transaksi Kasir")),
+    );
+  }
+}
+
+//
+// ─── HALAMAN FEATURE AI ─────────────────────────────────────────
+//
+class AiPage extends StatelessWidget {
+  const AiPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("AI Feature")),
+      body: const Center(child: Text("Halaman Fitur AI")),
     );
   }
 }
