@@ -31,26 +31,21 @@ class _FutureAiState extends State<FutureAi> {
   List<Product> _getRecommendations() {
     final recommendations = <Product>[];
 
-    // Cross-selling: based on current cart items
-    final cartCategories = _currentCart.map((item) => item.product.category).toSet();
-    final cartProducts = _currentCart.map((item) => item.product).toList();
+    // Primary: Top-selling products based on transaction history
+    final topSellingProducts = _dataService.getTopSellingProducts();
+    recommendations.addAll(topSellingProducts);
 
-    for (final category in cartCategories) {
-      final categoryProducts = _dataService.products
-          .where((p) => p.category == category && !cartProducts.contains(p))
-          .toList();
-      recommendations.addAll(categoryProducts.take(2)); // Take up to 2 per category
-    }
+    // Secondary: Cross-selling based on current cart items (if cart has items)
+    if (_currentCart.isNotEmpty) {
+      final cartCategories = _currentCart.map((item) => item.product.category).toSet();
+      final cartProducts = _currentCart.map((item) => item.product).toList();
 
-    // Up-selling: larger sizes or higher margin products
-    for (final item in _currentCart) {
-      final similarProducts = _dataService.products
-          .where((p) =>
-              p.category == item.product.category &&
-              p.price > item.product.price &&
-              p != item.product)
-          .toList();
-      recommendations.addAll(similarProducts.take(1)); // Take 1 up-sell per item
+      for (final category in cartCategories) {
+        final categoryProducts = _dataService.products
+            .where((p) => p.category == category && !cartProducts.contains(p) && !topSellingProducts.contains(p))
+            .toList();
+        recommendations.addAll(categoryProducts.take(1)); // Take 1 per category to supplement top sellers
+      }
     }
 
     // Remove duplicates and limit to 5
@@ -202,7 +197,7 @@ class _FutureAiState extends State<FutureAi> {
               ),
               const SizedBox(height: 8),
               const Text(
-                'Based on your current cart and purchase patterns',
+                'Frequently purchased by customers',
                 style: TextStyle(color: Colors.grey),
               ),
               const SizedBox(height: 16),
@@ -233,21 +228,21 @@ class _FutureAiState extends State<FutureAi> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
+                      'Popular Product Recommendations',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'AI analyzes transaction history to recommend products that customers frequently purchase.',
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
                       'Cross-Selling Analysis',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      'Products in the same category as your cart items are recommended to increase basket size.',
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Up-Selling Suggestions',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Higher-value alternatives in the same category are suggested for increased revenue.',
+                      'When items are in cart, complementary products from the same category are suggested.',
                     ),
                     const SizedBox(height: 16),
                     const Text(
