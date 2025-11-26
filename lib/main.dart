@@ -47,7 +47,7 @@ class HomePage extends StatelessWidget {
 
                 // Manajemen Produk
                 menuCard(
-                  imageUrl: "https://i.ibb.co/7CqVJ6X/seafood.png",
+                  imagePath: "assets/image/product.jpeg",
                   title: "Manajemen Product & Stock",
                   onTap: () {
                     Navigator.push(
@@ -60,7 +60,7 @@ class HomePage extends StatelessWidget {
 
                 // Cashier Transactions
                 menuCard(
-                  imageUrl: "https://i.ibb.co/THgJtTC/cashier.png",
+                  imagePath: "assets/image/cashier.jpeg",
                   title: "Cashier Transactions",
                   onTap: () {
                     Navigator.push(
@@ -73,7 +73,7 @@ class HomePage extends StatelessWidget {
 
                 // AI Feature
                 menuCard(
-                  imageUrl: "https://i.ibb.co/6B4rtVx/ai.png",
+                  imagePath: "assets/image/ai.jpeg",
                   title: "Feature AI",
                   onTap: () {
                     Navigator.push(
@@ -92,7 +92,7 @@ class HomePage extends StatelessWidget {
   }
 
   Widget menuCard({
-    required String imageUrl,
+    required String imagePath,
     required String title,
     required VoidCallback onTap,
   }) {
@@ -109,7 +109,7 @@ class HomePage extends StatelessWidget {
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: Image.network(
-                imageUrl,
+                imagePath,
                 width: 90,
                 height: 90,
                 fit: BoxFit.cover,
