@@ -45,10 +45,10 @@ class HomePage extends StatelessWidget {
                 ),
                 const SizedBox(height: 40),
 
-                // Manajemen Produk
+                // Seafood Menu
                 menuCard(
                   imagePath: "assets/image/product.jpeg",
-                  title: "Manajemen Product & Stock",
+                  title: "Seafood Menu",
                   onTap: () {
                     Navigator.push(
                       context,

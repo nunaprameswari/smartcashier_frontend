@@ -16,7 +16,7 @@ class _ProductpageState extends State<Productpage> with SingleTickerProviderStat
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 2, vsync: this);
   }
 
   @override
@@ -29,21 +29,19 @@ class _ProductpageState extends State<Productpage> with SingleTickerProviderStat
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Product & Stock Management'),
+        title: const Text('Seafood Menu Management'),
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
-            Tab(text: 'Products'),
-            Tab(text: 'Stock'),
-            Tab(text: 'Reports'),
+            Tab(text: 'Seafood & Stock'),
+            Tab(text: 'Sales Reports'),
           ],
         ),
       ),
       body: TabBarView(
         controller: _tabController,
         children: [
-          _buildProductsTab(),
-          _buildStockTab(),
+          _buildSeafoodAndStockTab(),
           _buildReportsTab(),
         ],
       ),
@@ -54,26 +52,7 @@ class _ProductpageState extends State<Productpage> with SingleTickerProviderStat
     );
   }
 
-  Widget _buildProductsTab() {
-    final products = _dataService.products;
-    return ListView.builder(
-      itemCount: products.length,
-      itemBuilder: (context, index) {
-        final product = products[index];
-        return Card(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          child: ListTile(
-            title: Text(product.name),
-            subtitle: Text('${product.category} - Stock: ${product.stock}'),
-            trailing: Text('Rp ${product.price}'),
-            onTap: () => _showEditProductDialog(product),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildStockTab() {
+  Widget _buildSeafoodAndStockTab() {
     final products = _dataService.products;
     final lowStockProducts = _dataService.getLowStockProducts();
 
@@ -109,10 +88,16 @@ class _ProductpageState extends State<Productpage> with SingleTickerProviderStat
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 child: ListTile(
                   title: Text(product.name),
-                  subtitle: Text('Current Stock: ${product.stock}'),
+                  subtitle: Text('${product.category} - Stock: ${product.stock}'),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      Text('Rp ${product.price.toStringAsFixed(0)}'),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        icon: const Icon(Icons.edit),
+                        onPressed: () => _showEditProductDialog(product),
+                      ),
                       IconButton(
                         icon: const Icon(Icons.remove),
                         onPressed: () => _updateStock(product, product.stock - 1),
@@ -142,7 +127,7 @@ class _ProductpageState extends State<Productpage> with SingleTickerProviderStat
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Sales Reports',
+            'Seafood Sales Reports',
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
@@ -162,7 +147,7 @@ class _ProductpageState extends State<Productpage> with SingleTickerProviderStat
           ),
           const SizedBox(height: 16),
           const Text(
-            'Top Selling Products',
+            'Top Selling Seafood Items',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
@@ -190,7 +175,7 @@ class _ProductpageState extends State<Productpage> with SingleTickerProviderStat
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Add Product'),
+        title: const Text('Add Seafood Item'),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -241,7 +226,7 @@ class _ProductpageState extends State<Productpage> with SingleTickerProviderStat
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Edit Product'),
+        title: const Text('Edit Seafood Item'),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
