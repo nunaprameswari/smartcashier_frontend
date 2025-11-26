@@ -67,24 +67,7 @@ class _CartPageState extends State<CartPage> {
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 10),
-                ..._dataService.products.map((product) => Card(
-                  margin: const EdgeInsets.only(bottom: 10),
-                  child: ListTile(
-                    title: Text(product.name),
-                    subtitle: Text('${product.category} - Stock: ${product.stock}'),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text('Rp ${product.price.toStringAsFixed(0)}'),
-                        const SizedBox(width: 10),
-                        ElevatedButton(
-                          onPressed: () => _addToCart(product),
-                          child: const Text('Add'),
-                        ),
-                      ],
-                    ),
-                  ),
-                )),
+                ..._buildProductCategories(),
 
                 const Divider(height: 40),
 
@@ -124,15 +107,6 @@ class _CartPageState extends State<CartPage> {
                 )),
               ],
             ),
-          ),
-
-          // ================= SUMMARY BOX =================
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-            decoration: const BoxDecoration(
-              color: Colors.grey,
-            ),
-            child: const SizedBox(height: 1),
           ),
 
           Padding(
@@ -208,6 +182,57 @@ class _CartPageState extends State<CartPage> {
         ],
       ),
     );
+  }
+
+  List<Widget> _buildProductCategories() {
+    final categories = <String>{};
+    for (var product in _dataService.products) {
+      categories.add(product.category);
+    }
+
+    final widgets = <Widget>[];
+    for (var category in categories) {
+      widgets.add(
+        Padding(
+          padding: const EdgeInsets.only(bottom: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                category,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2D8CFF),
+                ),
+              ),
+              const SizedBox(height: 10),
+              ..._dataService.products
+                  .where((product) => product.category == category)
+                  .map((product) => Card(
+                margin: const EdgeInsets.only(bottom: 8),
+                child: ListTile(
+                  title: Text(product.name),
+                  subtitle: Text('Stock: ${product.stock}'),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('Rp ${product.price.toStringAsFixed(0)}'),
+                      const SizedBox(width: 10),
+                      ElevatedButton(
+                        onPressed: product.stock > 0 ? () => _addToCart(product) : null,
+                        child: const Text('Add'),
+                      ),
+                    ],
+                  ),
+                ),
+              )),
+            ],
+          ),
+        ),
+      );
+    }
+    return widgets;
   }
 
   void _addToCart(Product product) {
