@@ -3,333 +3,262 @@ import '../models/product.dart';
 import '../models/transaction.dart';
 import '../services/data_service.dart';
 
-class Cashier extends StatefulWidget {
-  const Cashier({super.key});
+class CartPage extends StatefulWidget {
+  const CartPage({super.key});
 
   @override
-  State<Cashier> createState() => _CashierState();
+  State<CartPage> createState() => _CartPageState();
 }
 
-class _CashierState extends State<Cashier> {
+class _CartPageState extends State<CartPage> {
   final DataService _dataService = DataService();
-  final List<TransactionItem> _cart = [];
-  final TextEditingController _barcodeController = TextEditingController();
-  final TextEditingController _searchController = TextEditingController();
-  double _discount = 0.0;
-  double _taxRate = 0.1; // 10% tax
-
-  double get _subtotal => _cart.fold(0, (sum, item) => sum + item.subtotal);
-  double get _tax => _subtotal * _taxRate;
-  double get _total => _subtotal - _discount + _tax;
-
-  void _addProductToCart(Product product) {
-    final existingItem = _cart.firstWhere(
-      (item) => item.product.id == product.id,
-      orElse: () => TransactionItem(product: product, quantity: 0),
-    );
-
-    if (existingItem.quantity == 0) {
-      _cart.add(TransactionItem(product: product, quantity: 1));
-    } else {
-      existingItem.quantity++;
-    }
-    setState(() {});
-  }
-
-  void _removeFromCart(int index) {
-    _cart.removeAt(index);
-    setState(() {});
-  }
-
-  void _updateQuantity(int index, int quantity) {
-    if (quantity <= 0) {
-      _removeFromCart(index);
-    } else {
-      _cart[index].quantity = quantity;
-      setState(() {});
-    }
-  }
-
-  void _scanProduct() {
-    final barcode = _barcodeController.text.trim();
-    if (barcode.isNotEmpty) {
-      final product = _dataService.getProductByBarcode(barcode);
-      if (product != null) {
-        _addProductToCart(product);
-        _barcodeController.clear();
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Product not found')),
-        );
-      }
-    }
-  }
-
-  void _searchAndAddProduct() {
-    final query = _searchController.text.trim();
-    if (query.isNotEmpty) {
-      final products = _dataService.searchProducts(query);
-      if (products.isNotEmpty) {
-        _showProductSelectionDialog(products);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No products found')),
-        );
-      }
-    }
-  }
-
-  void _showProductSelectionDialog(List<Product> products) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Select Product'),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: products.length,
-            itemBuilder: (context, index) {
-              final product = products[index];
-              return ListTile(
-                title: Text(product.name),
-                subtitle: Text('Rp ${product.price}'),
-                onTap: () {
-                  _addProductToCart(product);
-                  _searchController.clear();
-                  Navigator.of(context).pop();
-                },
-              );
-            },
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _completeTransaction(PaymentMethod paymentMethod, {double? cashReceived}) {
-    if (_cart.isEmpty) return;
-
-    final transaction = Transaction(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      date: DateTime.now(),
-      items: List.from(_cart),
-      total: _subtotal,
-      discount: _discount,
-      tax: _tax,
-      paymentMethod: paymentMethod,
-      cashReceived: cashReceived,
-      change: cashReceived != null ? cashReceived - _total : null,
-    );
-
-    _dataService.addTransaction(transaction);
-    _cart.clear();
-    _discount = 0.0;
-    setState(() {});
-
-    _showReceiptDialog(transaction);
-  }
-
-  void _showReceiptDialog(Transaction transaction) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Receipt'),
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Transaction ID: ${transaction.id}'),
-              Text('Date: ${transaction.date}'),
-              const Divider(),
-              ...transaction.items.map((item) =>
-                Text('${item.product.name} x${item.quantity} - Rp ${item.subtotal}')
-              ),
-              const Divider(),
-              Text('Subtotal: Rp ${_subtotal.toStringAsFixed(0)}'),
-              Text('Discount: Rp ${_discount.toStringAsFixed(0)}'),
-              Text('Tax: Rp ${_tax.toStringAsFixed(0)}'),
-              Text('Total: Rp ${transaction.grandTotal.toStringAsFixed(0)}'),
-              if (transaction.cashReceived != null) ...[
-                Text('Cash Received: Rp ${transaction.cashReceived}'),
-                Text('Change: Rp ${transaction.change}'),
-              ],
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showPaymentDialog() {
-    final cashController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Payment'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ElevatedButton(
-              onPressed: () => _completeTransaction(PaymentMethod.digital),
-              child: const Text('Digital Payment'),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: cashController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Cash Received'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                final cash = double.tryParse(cashController.text);
-                if (cash != null && cash >= _total) {
-                  _completeTransaction(PaymentMethod.cash, cashReceived: cash);
-                  Navigator.of(context).pop();
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Invalid cash amount')),
-                  );
-                }
-              },
-              child: const Text('Pay with Cash'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  final List<TransactionItem> _cartItems = [];
 
   @override
   Widget build(BuildContext context) {
+    int totalItem = _cartItems.fold(0, (sum, item) => sum + item.quantity);
+    double totalPrice = _cartItems.fold(0.0, (sum, item) => sum + item.subtotal);
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Cashier Transactions'),
-        actions: [
-          if (_cart.isNotEmpty)
-            IconButton(
-              icon: const Icon(Icons.payment),
-              onPressed: _showPaymentDialog,
-            ),
-        ],
-      ),
       body: Column(
         children: [
-          // Product Input
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
+          // ================= HEADER =================
+          Container(
+            padding: const EdgeInsets.only(top: 50, left: 20, right: 20),
+            height: 180,
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              color: Color(0xFF2D8CFF),
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(80),
+                bottomRight: Radius.circular(80),
+              ),
+            ),
+            child: Row(
               children: [
-                TextField(
-                  controller: _barcodeController,
-                  decoration: InputDecoration(
-                    labelText: 'Barcode',
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.qr_code_scanner),
-                      onPressed: _scanProduct,
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: const Icon(Icons.arrow_back,
+                      color: Colors.white, size: 26),
+                ),
+                const SizedBox(width: 20),
+                const Expanded(
+                  child: Text(
+                    "Cashier",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
                     ),
                   ),
-                  onSubmitted: (_) => _scanProduct(),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    labelText: 'Search Product',
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.search),
-                      onPressed: _searchAndAddProduct,
-                    ),
-                  ),
-                  onSubmitted: (_) => _searchAndAddProduct(),
-                ),
+                )
               ],
             ),
           ),
 
-          // Cart
+          // ================= PRODUCTS LIST =================
           Expanded(
-            child: ListView.builder(
-              itemCount: _cart.length,
-              itemBuilder: (context, index) {
-                final item = _cart[index];
-                return Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: ListView(
+              padding: const EdgeInsets.all(20),
+              children: [
+                const Text(
+                  "Available Products",
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 10),
+                ..._dataService.products.map((product) => Card(
+                  margin: const EdgeInsets.only(bottom: 10),
                   child: ListTile(
-                    title: Text(item.product.name),
-                    subtitle: Text('Rp ${item.product.price}'),
+                    title: Text(product.name),
+                    subtitle: Text('${product.category} - Stock: ${product.stock}'),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        IconButton(
-                          icon: const Icon(Icons.remove),
-                          onPressed: () => _updateQuantity(index, item.quantity - 1),
-                        ),
-                        Text('${item.quantity}'),
-                        IconButton(
-                          icon: const Icon(Icons.add),
-                          onPressed: () => _updateQuantity(index, item.quantity + 1),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete),
-                          onPressed: () => _removeFromCart(index),
+                        Text('Rp ${product.price.toStringAsFixed(0)}'),
+                        const SizedBox(width: 10),
+                        ElevatedButton(
+                          onPressed: () => _addToCart(product),
+                          child: const Text('Add'),
                         ),
                       ],
                     ),
                   ),
-                );
-              },
+                )),
+
+                const Divider(height: 40),
+
+                const Text(
+                  "Cart Items",
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 10),
+
+                // ================= CART ITEMS =================
+                ..._cartItems.map((item) => Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          "${item.product.name} x${item.quantity}",
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        "Rp ${item.subtotal.toStringAsFixed(0)}",
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.remove),
+                        onPressed: () => _removeFromCart(item.product),
+                      ),
+                    ],
+                  ),
+                )),
+              ],
             ),
           ),
 
-          // Total
+          // ================= SUMMARY BOX =================
           Container(
-            padding: const EdgeInsets.all(16),
-            color: Colors.grey[200],
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+            decoration: const BoxDecoration(
+              color: Colors.grey,
+            ),
+            child: const SizedBox(height: 1),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 15),
             child: Column(
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Subtotal:'),
-                    Text('Rp ${_subtotal.toStringAsFixed(0)}'),
+                    const Text(
+                      "Total Items",
+                      style:
+                          TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                    ),
+                    Text(
+                      "$totalItem",
+                      style:
+                          const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                    ),
                   ],
                 ),
+                const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Discount:'),
-                    Text('Rp ${_discount.toStringAsFixed(0)}'),
-                  ],
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Tax:'),
-                    Text('Rp ${_tax.toStringAsFixed(0)}'),
-                  ],
-                ),
-                const Divider(),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Total:', style: TextStyle(fontWeight: FontWeight.bold)),
-                    Text('Rp ${_total.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    const Text(
+                      "Total Price",
+                      style:
+                          TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                    ),
+                    Text(
+                      "Rp ${totalPrice.toStringAsFixed(0)}",
+                      style:
+                          const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                    ),
                   ],
                 ),
               ],
             ),
           ),
+
+          // ================= CHECKOUT BUTTON =================
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 10),
+            child: Container(
+              width: double.infinity,
+              height: 50,
+              decoration: BoxDecoration(
+                color: const Color(0xFF2D8CFF),
+                borderRadius: BorderRadius.circular(25),
+              ),
+              child: ElevatedButton(
+                onPressed: _cartItems.isEmpty ? null : _checkout,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2D8CFF),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                ),
+                child: const Text(
+                  "Checkout",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 20),
         ],
       ),
+    );
+  }
+
+  void _addToCart(Product product) {
+    setState(() {
+      final existingItem = _cartItems.firstWhere(
+        (item) => item.product.id == product.id,
+        orElse: () => TransactionItem(product: product, quantity: 0),
+      );
+
+      if (_cartItems.contains(existingItem)) {
+        existingItem.quantity++;
+      } else {
+        _cartItems.add(TransactionItem(product: product, quantity: 1));
+      }
+    });
+  }
+
+  void _removeFromCart(Product product) {
+    setState(() {
+      final existingItem = _cartItems.firstWhere(
+        (item) => item.product.id == product.id,
+      );
+
+      if (existingItem.quantity > 1) {
+        existingItem.quantity--;
+      } else {
+        _cartItems.remove(existingItem);
+      }
+    });
+  }
+
+  void _checkout() {
+    final total = _cartItems.fold(0.0, (sum, item) => sum + item.subtotal);
+    final transaction = Transaction(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      date: DateTime.now(),
+      items: List.from(_cartItems),
+      total: total,
+      discount: 0,
+      tax: 0,
+      paymentMethod: PaymentMethod.cash,
+    );
+
+    _dataService.addTransaction(transaction);
+
+    setState(() {
+      _cartItems.clear();
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Transaction completed successfully!')),
     );
   }
 }

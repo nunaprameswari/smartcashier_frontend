@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:layanan_sosial/menu/productpage.dart';
-import 'package:layanan_sosial/menu/cashier.dart';
+import 'package:layanan_sosial/menu/cashier.dart' as cashier;
 import 'package:layanan_sosial/menu/ai.dart';
 
 void main() {
@@ -65,7 +65,7 @@ class HomePage extends StatelessWidget {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const Cashier()),
+                      MaterialPageRoute(builder: (context) => const cashier.CartPage()),
                     );
                   },
                 ),
